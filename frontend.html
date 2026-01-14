@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Car Classification Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/feather-icons"></script>
+  <!-- Chart.js for Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-800">
+
+  <!-- Layout -->
+  <div class="flex min-h-screen">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-slate-200 p-6 hidden md:block shadow-sm">
+      <h2 class="text-2xl font-bold mb-10 flex items-center gap-2">
+        <i data-feather="cpu" class="text-red-500"></i> <span class="text-blue-600">Car AI</span>
+      </h2>
+      <nav class="space-y-3">
+        <div class="px-4 py-2 rounded-lg bg-blue-50 text-blue-600 font-medium flex items-center gap-2 cursor-pointer" onclick="scrollToSection('dashboard')">
+          <i data-feather="bar-chart-2" class="text-indigo-500"></i> Dashboard
+        </div>
+        <div class="px-4 py-2 rounded-lg hover:bg-slate-100 flex items-center gap-2 cursor-pointer" onclick="scrollToSection('predictions')">
+          <i data-feather="camera" class="text-green-500"></i> Predictions
+        </div>
+        <div class="px-4 py-2 rounded-lg hover:bg-slate-100 flex items-center gap-2 cursor-pointer" onclick="scrollToSection('analytics')">
+          <i data-feather="trending-up" class="text-purple-500"></i> Analytics
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 p-8 space-y-16">
+
+      <!-- Dashboard Section -->
+      <section id="dashboard">
+        <div class="flex justify-between items-center mb-8">
+          <h1 class="text-3xl font-bold flex items-center gap-2">
+            <i data-feather="monitor" class="text-red-500"></i> Car Image Classification
+          </h1>
+          <div class="text-sm text-slate-500">Model Status: <span class="text-green-600 font-medium">Online</span></div>
+        </div>
+
+        <!-- Stats with Highlight -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div class="bg-gradient-to-r from-blue-100 to-blue-50 rounded-2xl p-6 shadow flex items-center gap-3 border-l-4 border-blue-500">
+            <i data-feather="activity" class="text-blue-600"></i>
+            <div>
+              <p class="text-blue-700 text-sm font-semibold">Total Predictions</p>
+              <h3 class="text-3xl font-bold mt-2 text-blue-900" id="totalPredictions">1,247</h3>
+            </div>
+          </div>
+          <div class="bg-gradient-to-r from-green-100 to-green-50 rounded-2xl p-6 shadow flex items-center gap-3 border-l-4 border-green-500">
+            <i data-feather="check-circle" class="text-green-600"></i>
+            <div>
+              <p class="text-green-700 text-sm font-semibold">Model Accuracy</p>
+              <h3 class="text-3xl font-bold mt-2 text-green-900" id="modelAccuracy">94.2%</h3>
+            </div>
+          </div>
+          <div class="bg-gradient-to-r from-purple-100 to-purple-50 rounded-2xl p-6 shadow flex items-center gap-3 border-l-4 border-purple-500">
+            <i data-feather="clock" class="text-purple-600"></i>
+            <div>
+              <p class="text-purple-700 text-sm font-semibold">Avg. Confidence</p>
+              <h3 class="text-3xl font-bold mt-2 text-purple-900" id="avgConfidence">88.5%</h3>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Predictions Section -->
+      <section id="predictions" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Upload Card -->
+        <div class="bg-white rounded-2xl p-8 shadow">
+          <h2 class="text-xl font-semibold mb-2 flex items-center gap-2">
+            <i data-feather="upload" class="text-pink-500"></i> Upload Car Image
+          </h2>
+          <p class="text-slate-500 mb-6">Supported formats: JPG, PNG</p>
+
+          <div class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-blue-500 transition">
+            <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="previewImage(event)" />
+            <label for="imageInput" class="cursor-pointer">
+              <div class="flex flex-col items-center gap-3">
+                <span class="text-5xl">📤</span>
+                <span class="text-slate-600 font-medium">Click to upload image</span>
+              </div>
+            </label>
+          </div>
+
+          <button onclick="predictImage()" class="w-full mt-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold flex items-center justify-center gap-2">
+            <i data-feather="play" class="text-white"></i> Run Prediction
+          </button>
+        </div>
+
+        <!-- Result Card -->
+        <div class="bg-white rounded-2xl p-8 shadow">
+          <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+            <i data-feather="box" class="text-orange-500"></i> Prediction Output
+          </h2>
+
+          <div id="previewContainer" class="hidden mb-6">
+            <img id="previewImage" class="rounded-xl max-h-60 mx-auto shadow" />
+          </div>
+
+          <div id="result" class="hidden">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-slate-500 flex items-center gap-1"><i data-feather="tag" class="text-purple-500"></i> Predicted Class</span>
+              <span id="predictionClass" class="px-4 py-1 rounded-full bg-blue-100 text-blue-600 font-semibold"></span>
+            </div>
+            <div class="mb-6">
+              <span class="text-slate-500 flex items-center gap-1"><i data-feather="bar-chart" class="text-green-500"></i> Confidence</span>
+              <div class="w-full bg-slate-200 rounded-full h-3 mt-2">
+                <div id="confidenceBar" class="bg-green-500 h-3 rounded-full"></div>
+              </div>
+              <p id="confidenceText" class="text-right text-sm text-slate-500 mt-1"></p>
+            </div>
+            
+            <!-- Confidence Breakdown -->
+            <div class="mb-6">
+              <h3 class="font-medium text-slate-700 mb-2 flex items-center gap-2">
+                <i data-feather="pie-chart" class="text-red-500"></i> Confidence Breakdown
+              </h3>
+              <div id="confidenceBreakdown" class="space-y-2">
+                <!-- Will be populated by JavaScript -->
+              </div>
+            </div>
+          </div>
+
+          <div id="emptyState" class="text-center text-slate-400 mt-20">
+            Upload an image to see prediction results
+          </div>
+        </div>
+      </section>
+
+      <!-- Enhanced Analytics Section -->
+      <section id="analytics" class="bg-white rounded-2xl p-8 shadow">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-xl font-semibold flex items-center gap-2">
+            <i data-feather="activity" class="text-red-500"></i> Analytics
+          </h2>
+          <div class="flex items-center gap-2 text-sm">
+            <span class="text-slate-500">Time Range:</span>
+            <select class="border rounded-lg px-3 py-1" id="timeRange" onchange="updateAnalytics()">
+              <option>Last 7 days</option>
+              <option>Last 30 days</option>
+              <option>Last 90 days</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Analytics Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          <!-- Top Predictions Chart -->
+          <div class="bg-gradient-to-br from-slate-50 to-white rounded-xl p-6 border border-slate-200">
+            <h3 class="font-semibold mb-4 flex items-center gap-2">
+              <i data-feather="bar-chart-2" class="text-blue-500"></i> Top Predicted Models
+            </h3>
+            <div class="h-64">
+              <canvas id="topModelsChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Confidence Trends -->
+          <div class="bg-gradient-to-br from-slate-50 to-white rounded-xl p-6 border border-slate-200">
+            <h3 class="font-semibold mb-4 flex items-center gap-2">
+              <i data-feather="trending-up" class="text-green-500"></i> Confidence Trends
+            </h3>
+            <div class="h-64">
+              <canvas id="confidenceTrendsChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Prediction History -->
+          <div class="lg:col-span-2 bg-gradient-to-br from-slate-50 to-white rounded-xl p-6 border border-slate-200">
+            <h3 class="font-semibold mb-4 flex items-center gap-2">
+              <i data-feather="list" class="text-purple-500"></i> Recent Predictions
+            </h3>
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead>
+                  <tr class="text-left text-slate-500 border-b">
+                    <th class="pb-3">Time</th>
+                    <th class="pb-3">Car Model</th>
+                    <th class="pb-3">Confidence</th>
+                    <th class="pb-3">Status</th>
+                    <th class="pb-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="predictionHistory">
+                  <!-- Will be populated by JavaScript -->
+                </tbody>
+              </table>
+            </div>
+            <div class="mt-4 text-center">
+              <button onclick="loadMoreHistory()" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                Load More History
+              </button>
+            </div>
+          </div>
+
+          <!-- Performance Metrics -->
+          <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+            <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-6">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-blue-700 text-sm font-semibold">High Confidence Predictions</p>
+                  <h3 class="text-2xl font-bold mt-2 text-blue-900">89.3%</h3>
+                </div>
+                <i data-feather="target" class="text-blue-500 text-2xl"></i>
+              </div>
+              <p class="text-blue-600 text-xs mt-2">Confidence > 85%</p>
+            </div>
+            
+            <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-6">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-green-700 text-sm font-semibold">Avg Processing Time</p>
+                  <h3 class="text-2xl font-bold mt-2 text-green-900">0.42s</h3>
+                </div>
+                <i data-feather="zap" class="text-green-500 text-2xl"></i>
+              </div>
+              <p class="text-green-600 text-xs mt-2">Per prediction</p>
+            </div>
+            
+            <div class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-6">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-purple-700 text-sm font-semibold">Peak Usage Hours</p>
+                  <h3 class="text-2xl font-bold mt-2 text-purple-900">14:00-16:00</h3>
+                </div>
+                <i data-feather="clock" class="text-purple-500 text-2xl"></i>
+              </div>
+              <p class="text-purple-600 text-xs mt-2">Most active time</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    feather.replace();
+
+    let selectedFile = null;
+    let predictionHistory = [];
+    let charts = {};
+
+    // Initialize analytics on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      initializeCharts();
+      loadPredictionHistory();
+      updateAnalytics();
+    });
+
+    function previewImage(event) {
+      selectedFile = event.target.files[0];
+      if (!selectedFile) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        document.getElementById('previewImage').src = reader.result;
+        document.getElementById('previewContainer').classList.remove('hidden');
+        document.getElementById('emptyState').classList.add('hidden');
+      };
+      reader.readAsDataURL(selectedFile);
+    }
+
+    async function predictImage() {
+      if (!selectedFile) {
+        alert('Please upload an image first');
+        return;
+      }
+
+      // Simulate prediction with mock data
+      const mockPredictions = [
+        { class: "Tesla Model 3", confidence: 0.92 },
+        { class: "BMW 3 Series", confidence: 0.05 },
+        { class: "Audi A4", confidence: 0.02 },
+        { class: "Mercedes C-Class", confidence: 0.01 }
+      ];
+
+      const prediction = mockPredictions[0];
+      const topPredictions = mockPredictions;
+
+      // Update prediction display
+      document.getElementById('result').classList.remove('hidden');
+      document.getElementById('predictionClass').innerText = prediction.class;
+      document.getElementById('confidenceText').innerText = `${(prediction.confidence * 100).toFixed(2)}%`;
+      document.getElementById('confidenceBar').style.width = `${prediction.confidence * 100}%`;
+
+      // Update confidence breakdown
+      const breakdownDiv = document.getElementById('confidenceBreakdown');
+      breakdownDiv.innerHTML = '';
+      topPredictions.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'flex items-center justify-between';
+        div.innerHTML = `
+          <span class="text-slate-600">${p.class}</span>
+          <div class="w-32 bg-slate-200 rounded-full h-2">
+            <div class="bg-blue-500 h-2 rounded-full" style="width: ${p.confidence * 100}%"></div>
+          </div>
+          <span class="text-slate-500 text-sm">${(p.confidence * 100).toFixed(1)}%</span>
+        `;
+        breakdownDiv.appendChild(div);
+      });
+
+      // Add to history
+      addToHistory(prediction.class, prediction.confidence);
+      
+      // Update analytics
+      updateAnalytics();
+      
+      // Scroll to analytics section
+      setTimeout(() => scrollToSection('analytics'), 500);
+    }
+
+    function addToHistory(carModel, confidence) {
+      const now = new Date();
+      const historyItem = {
+        id: Date.now(),
+        time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        date: now.toLocaleDateString(),
+        model: carModel,
+        confidence: confidence,
+        status: 'success'
+      };
+      
+      predictionHistory.unshift(historyItem);
+      
+      // Keep only last 10 items
+      if (predictionHistory.length > 10) {
+        predictionHistory = predictionHistory.slice(0, 10);
+      }
+      
+      updateHistoryTable();
+      updateStats();
+    }
+
+    function updateHistoryTable() {
+      const tableBody = document.getElementById('predictionHistory');
+      tableBody.innerHTML = '';
+      
+      predictionHistory.forEach(item => {
+        const row = document.createElement('tr');
+        row.className = 'border-b border-slate-100 hover:bg-slate-50';
+        row.innerHTML = `
+          <td class="py-3">
+            <div class="text-sm font-medium">${item.time}</div>
+            <div class="text-xs text-slate-500">${item.date}</div>
+          </td>
+          <td class="py-3 font-medium">${item.model}</td>
+          <td class="py-3">
+            <div class="flex items-center gap-2">
+              <div class="w-16 bg-slate-200 rounded-full h-2">
+                <div class="bg-green-500 h-2 rounded-full" style="width: ${item.confidence * 100}%"></div>
+              </div>
+              <span class="text-sm">${(item.confidence * 100).toFixed(1)}%</span>
+            </div>
+          </td>
+          <td class="py-3">
+            <span class="px-3 py-1 rounded-full text-xs font-medium ${item.status === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+              ${item.status === 'success' ? '✓ Success' : '✗ Failed'}
+            </span>
+          </td>
+          <td class="py-3">
+            <button class="text-blue-600 hover:text-blue-800 text-sm font-medium" onclick="viewPrediction(${item.id})">
+              View Details
+            </button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    function loadPredictionHistory() {
+      // Mock history data
+      const mockHistory = [
+        { id: 1, time: "14:30", date: "2026-01-14", model: "Tesla Model 3", confidence: 0.92, status: "success" },
+        { id: 2, time: "13:15", date: "2026-01-14", model: "BMW X5", confidence: 0.88, status: "success" },
+        { id: 3, time: "11:45", date: "2026-01-14", model: "Toyota Camry", confidence: 0.95, status: "success" },
+        { id: 4, time: "10:20", date: "2026-01-14", model: "Ford Mustang", confidence: 0.82, status: "success" },
+        { id: 5, time: "09:30", date: "2026-01-13", model: "Audi Q7", confidence: 0.79, status: "success" },
+      ];
+      
+      predictionHistory = mockHistory;
+      updateHistoryTable();
+    }
+
+    function loadMoreHistory() {
+      // In a real app, this would load more from the server
+      alert('Loading more history...');
+    }
+
+    function viewPrediction(id) {
+      const item = predictionHistory.find(p => p.id === id);
+      if (item) {
+        alert(`Viewing prediction details:\n\nModel: ${item.model}\nConfidence: ${(item.confidence * 100).toFixed(2)}%\nTime: ${item.time} ${item.date}\nStatus: ${item.status}`);
+      }
+    }
+
+    function initializeCharts() {
+      // Top Models Chart
+      const topModelsCtx = document.getElementById('topModelsChart').getContext('2d');
+      charts.topModels = new Chart(topModelsCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Tesla Model 3', 'Toyota Camry', 'BMW 3 Series', 'Ford F-150', 'Honda Civic'],
+          datasets: [{
+            label: 'Predictions',
+            data: [42, 38, 35, 28, 25],
+            backgroundColor: '#3b82f6',
+            borderRadius: 4,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Number of Predictions'
+              }
+            }
+          }
+        }
+      });
+
+      // Confidence Trends Chart
+      const confidenceCtx = document.getElementById('confidenceTrendsChart').getContext('2d');
+      charts.confidenceTrends = new Chart(confidenceCtx, {
+        type: 'line',
+        data: {
+          labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+          datasets: [{
+            label: 'Average Confidence',
+            data: [88.2, 89.5, 87.8, 90.1, 92.3, 88.7, 91.2],
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: false,
+              min: 85,
+              max: 100,
+              title: {
+                display: true,
+                text: 'Confidence %'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function updateAnalytics() {
+      const timeRange = document.getElementById('timeRange').value;
+      
+      // Update stats based on time range
+      if (timeRange === 'Last 7 days') {
+        document.getElementById('totalPredictions').textContent = '347';
+        document.getElementById('modelAccuracy').textContent = '94.2%';
+        document.getElementById('avgConfidence').textContent = '88.5%';
+      } else if (timeRange === 'Last 30 days') {
+        document.getElementById('totalPredictions').textContent = '1,247';
+        document.getElementById('modelAccuracy').textContent = '93.8%';
+        document.getElementById('avgConfidence').textContent = '87.9%';
+      } else {
+        document.getElementById('totalPredictions').textContent = '3,892';
+        document.getElementById('modelAccuracy').textContent = '94.0%';
+        document.getElementById('avgConfidence').textContent = '88.2%';
+      }
+      
+      // In a real app, you would fetch new chart data here
+      console.log('Updating analytics for:', timeRange);
+    }
+
+    function updateStats() {
+      // Update total predictions count
+      const totalEl = document.getElementById('totalPredictions');
+      const currentTotal = parseInt(totalEl.textContent.replace(',', ''));
+      totalEl.textContent = (currentTotal + 1).toLocaleString();
+    }
+
+    function scrollToSection(id) {
+      document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+    }
+  </script>
+
+</body>
+</html>
