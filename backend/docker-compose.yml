@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    container_name: car-classification-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./app/ml:/app/app/ml
+    environment:
+      - DATABASE_URL=sqlite:///./car_classification.db
+      - DEBUG=true
+    restart: unless-stopped
