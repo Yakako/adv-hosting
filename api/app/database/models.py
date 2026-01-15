@@ -3,7 +3,7 @@ Database models for the application
 """
 from sqlalchemy import Column, Integer, String, Float, DateTime
 from datetime import datetime
-from database.connection import Base
+from .connection import Base
 
 
 class Prediction(Base):

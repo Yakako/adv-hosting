@@ -5,18 +5,17 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List
 from datetime import datetime, timedelta
-import os
 import shutil
 from pathlib import Path
 
-from database.connection import init_db, get_db
-from database.models import Prediction
-from schemas.prediction import (
+from .database.connection import init_db, get_db
+from .database.models import Prediction
+from .schemas.prediction import (
     PredictionResponse,
     PredictResponse,
     StatsResponse
 )
-from services.mock_model import get_model
+from .services.mock_model import get_model
 
 # Create FastAPI app
 app = FastAPI(
