@@ -1,0 +1,29 @@
+# version: '3.8'
+
+services:
+  # backend:
+  #   build: .
+  #   container_name: car-classification-backend
+  #   ports:
+  #     - "8000:8000"
+  #   volumes:
+  #     - ./uploads:/app/uploads
+  #     - ./app/ml:/app/app/ml
+  #   environment:
+  #     - DATABASE_URL=sqlite:///./car_classification.db
+  #     - DEBUG=true
+  #   restart: unless-stopped
+
+
+    postgres:
+      image: postgres:13
+      container_name: car-classification-db
+      environment:
+        - POSTGRES_USER=car_user
+        - POSTGRES_PASSWORD=car_password
+        - POSTGRES_DB=car_classification
+      # volumes:
+        # - db_data:/var/lib/postgresql/data
+      ports:
+        - "5433:5432"  # Using port 5433 to avoid conflict
+      restart: unless-stopped
